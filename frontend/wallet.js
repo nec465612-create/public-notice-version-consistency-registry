@@ -46,3 +46,11 @@ export function shortAddress(address) {
   const value = String(address || "");
   return value.length > 12 ? `${value.slice(0, 6)}…${value.slice(-4)}` : value;
 }
+
+export function getWriteClient(state, modules) {
+  return state.writeClient ||= modules.createClient({
+    chain: modules.studionet,
+    account: state.account,
+    provider: state.provider,
+  });
+}

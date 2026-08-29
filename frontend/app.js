@@ -1,4 +1,4 @@
-import { createProviderRegistry, shortAddress } from "./wallet.js";
+import { createProviderRegistry, getWriteClient, shortAddress } from "./wallet.js";
 
 const SDK_URL = "https://esm.sh/genlayer-js@1.1.8?bundle";
 const CHAINS_URL = "https://esm.sh/genlayer-js@1.1.8/chains?bundle";
@@ -82,11 +82,7 @@ async function write(functionName, args) {
   const modules = await clients();
   state.readClient ||= modules.createClient({ chain: modules.studionet });
   await ensureNetwork(state.provider, modules.studionet);
-  const writeClient = state.writeClient ||= modules.createClient({
-    chain: modules.studionet,
-    account: state.account,
-    provider: state.provider,
-  });
+  const writeClient = getWriteClient(state, modules);
   const hash = await writeClient.writeContract({ address, functionName, args, value: BigInt(0) });
   setStatus(`Submitted ${hash.slice(0, 12)}… — waiting for FINALIZED`, "pending");
   const receipt = await state.readClient.waitForTransactionReceipt({

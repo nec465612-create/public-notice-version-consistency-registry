@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { createProviderRegistry, walletBrand } from "../../frontend/wallet.js";
+import { createProviderRegistry, getWriteClient, walletBrand } from "../../frontend/wallet.js";
 
 const providerA = { request: async () => [] };
 const providerB = { request: async () => [] };
@@ -29,10 +29,22 @@ assert.equal(app.includes('.connect("studionet")'), false);
 assert.match(app, /ensureNetwork/);
 assert.match(index, /id="walletState"/);
 const networkIndex = app.indexOf("await ensureNetwork(state.provider, modules.studionet)");
-const recreateIndex = app.indexOf("const writeClient = state.writeClient ||= modules.createClient", networkIndex);
+const recreateIndex = app.indexOf("const writeClient = getWriteClient(state, modules)", networkIndex);
 const writeIndex = app.indexOf("await writeClient.writeContract", recreateIndex);
 assert.ok(networkIndex >= 0 && networkIndex < recreateIndex && recreateIndex < writeIndex);
 assert.match(app, /const onChainChanged = \(\) => \{[\s\S]*?state\.writeClient = null;/);
+const writeState = { writeClient: null, account: "0x0000000000000000000000000000000000000001", provider: providerA };
+let createdClients = 0;
+const writeModules = {
+  studionet: { id: 61999 },
+  createClient: (options) => { createdClients += 1; return { options, writeContract: async () => "0xwrite" }; },
+};
+writeState.writeClient = getWriteClient(writeState, writeModules);
+const onChainChanged = () => { writeState.writeClient = null; };
+onChainChanged();
+const recoveredClient = getWriteClient(writeState, writeModules);
+assert.equal(await recoveredClient.writeContract(), "0xwrite");
+assert.equal(createdClients, 2);
 assert.equal(app.includes("readClient ||= modules.createClient"), true);
 assert.equal(app.includes("readResult(readCaseId || undefined)"), true);
 assert.ok(app.indexOf("showResult(validateReadback(raw, expectedState))") < app.indexOf("setStatus(`FINALIZED + SUCCESS"));
