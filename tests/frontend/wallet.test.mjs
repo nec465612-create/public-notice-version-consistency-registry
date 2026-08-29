@@ -25,5 +25,6 @@ const app = readFileSync(new URL("../../frontend/app.js", import.meta.url), "utf
 assert.equal(app.includes("registry.addLegacy"), false);
 assert.equal(app.includes("readClient ||= modules.createClient"), true);
 assert.equal(app.includes("readResult(readCaseId || undefined)"), true);
+assert.ok(app.indexOf("showResult(validateReadback(raw, expectedState))") < app.indexOf("setStatus(`FINALIZED + SUCCESS"));
 
 console.log("wallet selector checks: PASS");

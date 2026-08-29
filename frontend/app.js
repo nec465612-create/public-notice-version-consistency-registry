@@ -5,6 +5,7 @@ const CHAINS_URL = "https://esm.sh/genlayer-js@1.1.8/chains?bundle";
 const TYPES_URL = "https://esm.sh/genlayer-js@1.1.8/types?bundle";
 const registry = createProviderRegistry();
 const state = { provider: null, wallet: null, account: "", readClient: null, writeClient: null, cleanup: null, busy: false };
+const ASSESSED_OUTCOMES = new Set(["CONSISTENT", "CONFLICTING", "MISSING_VERSION", "UNRESOLVED"]);
 let sdkPromise;
 
 const $ = (id) => document.getElementById(id);
@@ -89,6 +90,14 @@ function showResult(raw) {
   badge.dataset.outcome = value.outcome || "UNRESOLVED";
 }
 
+function validateReadback(raw, expectedState) {
+  const value = typeof raw === "string" ? JSON.parse(raw) : raw;
+  if (!value || value.state !== expectedState || !ASSESSED_OUTCOMES.has(value.outcome)) {
+    throw new Error(`Authoritative readback did not confirm ${expectedState}.`);
+  }
+  return value;
+}
+
 function formArgs() {
   const fieldIds = [
     "caseId", "subjectId", "urlA", "urlB", "noticeIdA", "noticeIdB", "revisionA", "revisionB",
@@ -97,14 +106,14 @@ function formArgs() {
   return fieldIds.map((id) => $(id).value.trim());
 }
 
-async function action(fn, readCaseId = null) {
+async function action(fn, readCaseId = null, expectedState) {
   if (state.busy) return;
   setBusy(true);
   try {
     const { hash } = await fn();
-    setStatus(`FINALIZED + SUCCESS: ${hash.slice(0, 12)}…`, "success");
     const raw = await readResult(readCaseId || undefined);
-    showResult(raw);
+    showResult(validateReadback(raw, expectedState));
+    setStatus(`FINALIZED + SUCCESS: ${hash.slice(0, 12)}…`, "success");
   } catch (error) {
     setStatus(error?.message || String(error), "error");
   } finally {
@@ -184,11 +193,11 @@ $("walletDialog").addEventListener("close", () => { $("walletError").textContent
 $("closeWallet").addEventListener("click", () => $("walletDialog").close());
 $("createForm").addEventListener("submit", (event) => {
   event.preventDefault();
-  action(() => write("create_case", formArgs()), $("caseId").value.trim());
+  action(() => write("create_case", formArgs()), $("caseId").value.trim(), "DRAFT");
 });
-$("freezeButton").addEventListener("click", () => action(() => write("freeze_case", [$("lookupCase").value.trim()])));
-$("assessButton").addEventListener("click", () => action(() => write("assess", [$("lookupCase").value.trim()])));
-$("retryButton").addEventListener("click", () => action(() => write("retry_unresolved", [$("lookupCase").value.trim()])));
+$("freezeButton").addEventListener("click", () => action(() => write("freeze_case", [$("lookupCase").value.trim()]), null, "FROZEN"));
+$("assessButton").addEventListener("click", () => action(() => write("assess", [$("lookupCase").value.trim()]), null, "ASSESSED"));
+$("retryButton").addEventListener("click", () => action(() => write("retry_unresolved", [$("lookupCase").value.trim()]), null, "ASSESSED"));
 $("readButton").addEventListener("click", async () => {
   try { setBusy(true); showResult(await readResult()); setStatus("Authoritative readback complete.", "success"); }
   catch (error) { setStatus(error?.message || String(error), "error"); }
