@@ -10,7 +10,7 @@ Notice Ledger is a `PROJECT` submission for comparing two public-notice sources 
 4. Create a draft with source-specific notice ID, revision, effective date, and retrieval window.
 5. Freeze the draft, assess both sources, and use the authoritative readback after a finalized successful transaction.
 
-The contract never accepts a caller-supplied expected date as truth. Each source must return a bounded JSON document with `notice_id`, `revision`, `effective_date`, and `content`, or an HTML page exposing the first three values through `data-notice-id`, `data-revision`, and `data-effective-date`. A missing revision becomes `MISSING_VERSION`; unavailable, malformed, overlong, or provenance-mismatched evidence becomes `UNRESOLVED`; equal normalized content digests become `CONSISTENT`; different digests become `CONFLICTING`.
+The contract never accepts a caller-supplied expected date as truth. Each source must return a bounded JSON document with `notice_id`, `revision`, `effective_date`, `retrieved_at`, and `content`, or an HTML page exposing those values through `data-notice-id`, `data-revision`, `data-effective-date`, and `data-retrieved-at`; `Date`/`Last-Modified` headers are also accepted. The frozen retrieval window is inclusive and both source timestamps must fall inside it. A missing revision becomes `MISSING_VERSION`; unavailable, malformed, overlong, missing-timestamp, out-of-window, or provenance-mismatched evidence becomes `UNRESOLVED`; equal normalized content digests become `CONSISTENT`; different digests become `CONFLICTING`.
 
 ## Local verification
 

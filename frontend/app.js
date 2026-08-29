@@ -59,6 +59,7 @@ function assertSuccess(receipt, modules) {
 async function write(functionName, args) {
   const address = requireAddress();
   const modules = await clients();
+  state.readClient ||= modules.createClient({ chain: modules.studionet });
   await state.writeClient.connect("studionet");
   const hash = await state.writeClient.writeContract({ address, functionName, args, value: BigInt(0) });
   setStatus(`Submitted ${hash.slice(0, 12)}… — waiting for FINALIZED`, "pending");
@@ -72,11 +73,11 @@ async function write(functionName, args) {
   return { address, hash, receipt };
 }
 
-async function readResult() {
+async function readResult(caseId = $("lookupCase").value.trim()) {
   const address = requireAddress();
   const modules = await sdk();
   state.readClient ||= modules.createClient({ chain: modules.studionet });
-  return state.readClient.readContract({ address, functionName: "get_result", args: [$('lookupCase').value.trim()] });
+  return state.readClient.readContract({ address, functionName: "get_result", args: [caseId] });
 }
 
 function showResult(raw) {
@@ -96,13 +97,13 @@ function formArgs() {
   return fieldIds.map((id) => $(id).value.trim());
 }
 
-async function action(fn) {
+async function action(fn, readCaseId = null) {
   if (state.busy) return;
   setBusy(true);
   try {
     const { hash } = await fn();
     setStatus(`FINALIZED + SUCCESS: ${hash.slice(0, 12)}…`, "success");
-    const raw = await readResult();
+    const raw = await readResult(readCaseId || undefined);
     showResult(raw);
   } catch (error) {
     setStatus(error?.message || String(error), "error");
@@ -175,10 +176,6 @@ window.addEventListener("eip6963:announceProvider", (event) => {
   registry.announce(event.detail);
 });
 window.dispatchEvent(new Event("eip6963:requestProvider"));
-window.setTimeout(() => {
-  if (!registry.list().length && window.ethereum) registry.addLegacy(window.ethereum);
-}, 200);
-
 $("walletButton").addEventListener("click", () => {
   renderWalletOptions();
   $("walletDialog").showModal();
@@ -187,7 +184,7 @@ $("walletDialog").addEventListener("close", () => { $("walletError").textContent
 $("closeWallet").addEventListener("click", () => $("walletDialog").close());
 $("createForm").addEventListener("submit", (event) => {
   event.preventDefault();
-  action(() => write("create_case", formArgs()));
+  action(() => write("create_case", formArgs()), $("caseId").value.trim());
 });
 $("freezeButton").addEventListener("click", () => action(() => write("freeze_case", [$("lookupCase").value.trim()])));
 $("assessButton").addEventListener("click", () => action(() => write("assess", [$("lookupCase").value.trim()])));

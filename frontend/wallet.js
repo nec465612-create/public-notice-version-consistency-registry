@@ -33,33 +33,11 @@ export function createProviderRegistry() {
     };
     byProvider.set(provider, record);
     if (record.uuid) byUuid.set(record.uuid, record);
-    for (const [candidate, value] of byProvider) {
-      if (value.legacy) {
-        byProvider.delete(candidate);
-        byUuid.delete(value.uuid);
-      }
-    }
-    return record;
-  }
-
-  function addLegacy(provider) {
-    if (!provider || typeof provider.request !== "function") return null;
-    const record = {
-      key: "legacy",
-      label: "Detected supported wallet",
-      info: { uuid: "legacy-window-ethereum", name: "Detected supported wallet", rdns: "legacy" },
-      provider,
-      uuid: "legacy-window-ethereum",
-      legacy: true,
-    };
-    byProvider.set(provider, record);
-    byUuid.set(record.uuid, record);
     return record;
   }
 
   return {
     announce,
-    addLegacy,
     list: () => [...byProvider.values()],
   };
 }

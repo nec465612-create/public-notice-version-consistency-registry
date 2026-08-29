@@ -89,6 +89,45 @@ def _html_field(body: str, name: str) -> str:
     return ""
 
 
+def _header(response, name: str) -> str:
+    headers = getattr(response, "headers", {}) or {}
+    for key, value in headers.items():
+        if str(key).lower() == name:
+            if not isinstance(value, str):
+                raise ValueError("invalid response header")
+            return value.strip()
+    return ""
+
+
+def _header_date(value: str) -> str:
+    if len(value) == 10:
+        return value
+    try:
+        date_part = value.split(",", 1)[1].strip().rsplit(" ", 1)[0]
+        return datetime.datetime.strptime(date_part, "%d %b %Y %H:%M:%S").date().isoformat()
+    except Exception:
+        return value
+
+
+def _source_field(payload: dict, key: str, limit: int) -> str:
+    value = payload.get(key, "")
+    if not isinstance(value, str):
+        raise ValueError("invalid source metadata")
+    value = value.strip()
+    if len(value) > limit:
+        raise ValueError("source metadata too large")
+    return value
+
+
+def _checked_source_value(value, limit: int) -> str:
+    if not isinstance(value, str):
+        raise ValueError("invalid source metadata")
+    value = value.strip()
+    if len(value) > limit:
+        raise ValueError("source metadata too large")
+    return value
+
+
 def _extract(response) -> dict:
     status = int(response.status)
     body = _text_from_body(response.body)
@@ -101,19 +140,33 @@ def _extract(response) -> dict:
         payload = None
 
     if payload is not None:
-        notice_id = str(payload.get("notice_id", "")).strip()
-        revision = str(payload.get("revision", "")).strip()
-        effective_date = str(payload.get("effective_date", "")).strip()
-        content = str(payload.get("content", "")).strip()
+        notice_id = _source_field(payload, "notice_id", MAX_TEXT)
+        revision = _source_field(payload, "revision", MAX_TEXT)
+        effective_date = _source_field(payload, "effective_date", 10)
+        retrieved_at = _source_field(payload, "retrieved_at", 10)
+        content = _source_field(payload, "content", MAX_BODY)
     else:
         if not re.search(r"<[^>]+>", body):
             raise ValueError("malformed source")
-        notice_id = _html_field(body, "notice-id")
-        revision = _html_field(body, "revision")
-        effective_date = _html_field(body, "effective-date")
+        notice_id = _checked_source_value(_html_field(body, "notice-id"), MAX_TEXT)
+        revision = _checked_source_value(_html_field(body, "revision"), MAX_TEXT)
+        effective_date = _checked_source_value(_html_field(body, "effective-date"), 10)
+        retrieved_at = _checked_source_value(_html_field(body, "retrieved-at"), 10)
         content = re.sub(r"<[^>]+>", " ", body)
         content = re.sub(r"\s+", " ", content).strip()
 
+    if not retrieved_at:
+        retrieved_at = _header(response, "x-source-retrieved-date")
+    if not retrieved_at:
+        retrieved_at = _header(response, "last-modified")
+    if not retrieved_at:
+        retrieved_at = _header(response, "date")
+    retrieved_at = _header_date(retrieved_at)
+    if not retrieved_at or len(retrieved_at) > 10:
+        raise ValueError("missing or invalid retrieval timestamp")
+    _date(retrieved_at, "source retrieved_at")
+    if effective_date:
+        _date(effective_date, "source effective_date")
     if len(content) > MAX_BODY:
         raise ValueError("content too large")
     if not content:
@@ -124,6 +177,7 @@ def _extract(response) -> dict:
         "notice_id": notice_id,
         "revision": revision,
         "effective_date": effective_date,
+        "retrieved_at": retrieved_at,
         "digest": digest,
     }
 
@@ -141,6 +195,8 @@ def _assess_sources(
     revision_b: str,
     effective_date_a: str,
     effective_date_b: str,
+    retrieved_not_before: str,
+    retrieved_not_after: str,
 ) -> dict:
     try:
         response_a = gl.nondet.web.get(url_a)
@@ -152,6 +208,11 @@ def _assess_sources(
 
     if source_a["status"] != 200 or source_b["status"] != 200:
         return _unresolved("UNAVAILABLE_SOURCE")
+    if not (
+        retrieved_not_before <= source_a["retrieved_at"] <= retrieved_not_after
+        and retrieved_not_before <= source_b["retrieved_at"] <= retrieved_not_after
+    ):
+        return _unresolved("RETRIEVAL_OUTSIDE_WINDOW")
     if not source_a["notice_id"] or not source_a["revision"] or not source_a["effective_date"]:
         return {"outcome": "MISSING_VERSION", "digest_a": source_a["digest"], "digest_b": source_b["digest"]}
     if not source_b["notice_id"] or not source_b["revision"] or not source_b["effective_date"]:
@@ -265,6 +326,8 @@ class Contract(gl.Contract):
         revision_b = str(record.revision_b)
         effective_date_a = str(record.effective_date_a)
         effective_date_b = str(record.effective_date_b)
+        retrieved_not_before = str(record.retrieved_not_before)
+        retrieved_not_after = str(record.retrieved_not_after)
 
         def leader_fn():
             return _assess_sources(
@@ -276,6 +339,8 @@ class Contract(gl.Contract):
                 revision_b,
                 effective_date_a,
                 effective_date_b,
+                retrieved_not_before,
+                retrieved_not_after,
             )
 
         def validator_fn(leader_result) -> bool:
@@ -291,6 +356,8 @@ class Contract(gl.Contract):
                     revision_b,
                     effective_date_a,
                     effective_date_b,
+                    retrieved_not_before,
+                    retrieved_not_after,
                 )
                 return _same_decision(leader_result.calldata, validator_result)
             except Exception:
