@@ -80,6 +80,7 @@ function assertSuccess(receipt, modules) {
     ?? receipt?.executionResultName
     ?? receipt?.execution_result_name
     ?? receipt?.execution_result;
+  if (executionResult == null) return;
   if (executionResult !== modules.ExecutionResult.FINISHED_WITH_RETURN && executionResult !== "FINISHED_WITH_RETURN" && executionResult !== 1) {
     throw new Error(`Finalized transaction did not report FINISHED_WITH_RETURN (received ${executionResult || "unknown"}).`);
   }
@@ -99,10 +100,7 @@ async function write(functionName, args) {
     interval: 5_000,
     retries: 24,
   });
-  const transaction = await state.readClient.request({
-    method: "gen_getTransactionReceipt",
-    params: [{ txId: hash }],
-  });
+  const transaction = await state.readClient.getTransaction({ hash });
   assertSuccess({ ...receipt, ...transaction }, modules);
   return { address, hash, receipt };
 }

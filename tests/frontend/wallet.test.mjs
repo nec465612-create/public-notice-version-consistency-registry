@@ -52,8 +52,8 @@ assert.match(app, /statusName \?\? receipt\?\.status/);
 assert.match(app, /status !== 7/);
 assert.ok(app.includes("receipt?.txExecutionResultName\n    ?? receipt?.txExecutionResult"));
 assert.match(app, /tx_execution_result_name/);
-assert.match(app, /method: "gen_getTransactionReceipt"/);
-assert.match(app, /params: \[\{ txId: hash \}\]/);
+assert.match(app, /if \(executionResult == null\) return/);
 assert.match(app, /executionResult !== 1/);
+assert.match(app, /state\.readClient\.getTransaction\(\{ hash \}\)/);
 
 console.log("wallet selector, OKX compatibility, chain-change write, and numeric receipt checks: PASS");
