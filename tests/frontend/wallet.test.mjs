@@ -48,5 +48,9 @@ assert.equal(createdClients, 2);
 assert.equal(app.includes("readClient ||= modules.createClient"), true);
 assert.equal(app.includes("readResult(readCaseId || undefined)"), true);
 assert.ok(app.indexOf("showResult(validateReadback(raw, expectedState))") < app.indexOf("setStatus(`FINALIZED + SUCCESS"));
+assert.match(app, /statusName \?\? receipt\?\.status/);
+assert.match(app, /status !== 7/);
+assert.match(app, /txExecutionResultName \?\? receipt\?\.txExecutionResult/);
+assert.match(app, /executionResult !== 1/);
 
-console.log("wallet selector, OKX compatibility, and chain-change write checks: PASS");
+console.log("wallet selector, OKX compatibility, chain-change write, and numeric receipt checks: PASS");

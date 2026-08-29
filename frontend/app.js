@@ -69,11 +69,13 @@ async function clients() {
 }
 
 function assertSuccess(receipt, modules) {
-  if (receipt?.status !== modules.TransactionStatus.FINALIZED && receipt?.status !== "FINALIZED") {
-    throw new Error(`Transaction did not reach FINALIZED (received ${receipt?.status || "unknown"}).`);
+  const status = receipt?.statusName ?? receipt?.status;
+  if (status !== modules.TransactionStatus.FINALIZED && status !== "FINALIZED" && status !== 7) {
+    throw new Error(`Transaction did not reach FINALIZED (received ${status || "unknown"}).`);
   }
-  if (receipt?.txExecutionResultName !== modules.ExecutionResult.FINISHED_WITH_RETURN && receipt?.txExecutionResultName !== "FINISHED_WITH_RETURN") {
-    throw new Error(`Finalized transaction did not report FINISHED_WITH_RETURN (received ${receipt?.txExecutionResultName || "unknown"}).`);
+  const executionResult = receipt?.txExecutionResultName ?? receipt?.txExecutionResult;
+  if (executionResult !== modules.ExecutionResult.FINISHED_WITH_RETURN && executionResult !== "FINISHED_WITH_RETURN" && executionResult !== 1) {
+    throw new Error(`Finalized transaction did not report FINISHED_WITH_RETURN (received ${executionResult || "unknown"}).`);
   }
 }
 
