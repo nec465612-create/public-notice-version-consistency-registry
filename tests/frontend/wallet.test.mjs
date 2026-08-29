@@ -22,9 +22,14 @@ assert.equal(registry.list().length, 2);
 
 assert.equal(typeof registry.addLegacy, "undefined");
 const app = readFileSync(new URL("../../frontend/app.js", import.meta.url), "utf8");
+const index = readFileSync(new URL("../../index.html", import.meta.url), "utf8");
 assert.equal(app.includes("registry.addLegacy"), false);
+assert.equal(app.includes("wallet_getSnaps"), false);
+assert.equal(app.includes('.connect("studionet")'), false);
+assert.match(app, /ensureNetwork/);
+assert.match(index, /id="walletState"/);
 assert.equal(app.includes("readClient ||= modules.createClient"), true);
 assert.equal(app.includes("readResult(readCaseId || undefined)"), true);
 assert.ok(app.indexOf("showResult(validateReadback(raw, expectedState))") < app.indexOf("setStatus(`FINALIZED + SUCCESS"));
 
-console.log("wallet selector checks: PASS");
+console.log("wallet selector and OKX compatibility checks: PASS");

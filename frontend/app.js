@@ -25,6 +25,26 @@ function requireAddress() {
   return address;
 }
 
+async function ensureNetwork(provider, network) {
+  const chainId = `0x${Number(network.id).toString(16)}`;
+  const currentChainId = await provider.request({ method: "eth_chainId" });
+  if (String(currentChainId).toLowerCase() === chainId) return;
+  const chainParams = {
+    chainId,
+    chainName: network.name,
+    rpcUrls: network.rpcUrls.default.http,
+    nativeCurrency: network.nativeCurrency,
+    blockExplorerUrls: [network.blockExplorers?.default.url],
+  };
+  try {
+    await provider.request({ method: "wallet_switchEthereumChain", params: [{ chainId }] });
+  } catch (error) {
+    if (error?.code !== 4902) throw error;
+    await provider.request({ method: "wallet_addEthereumChain", params: [chainParams] });
+    await provider.request({ method: "wallet_switchEthereumChain", params: [{ chainId }] });
+  }
+}
+
 async function sdk() {
   if (!sdkPromise) {
     sdkPromise = Promise.all([import(SDK_URL), import(CHAINS_URL), import(TYPES_URL)]).then(([core, chains, types]) => ({
@@ -61,7 +81,7 @@ async function write(functionName, args) {
   const address = requireAddress();
   const modules = await clients();
   state.readClient ||= modules.createClient({ chain: modules.studionet });
-  await state.writeClient.connect("studionet");
+  await ensureNetwork(state.provider, modules.studionet);
   const hash = await state.writeClient.writeContract({ address, functionName, args, value: BigInt(0) });
   setStatus(`Submitted ${hash.slice(0, 12)}… — waiting for FINALIZED`, "pending");
   const receipt = await state.readClient.waitForTransactionReceipt({
@@ -151,7 +171,7 @@ async function connect(option) {
     state.writeClient = null;
     const modules = await sdk();
     state.writeClient = modules.createClient({ chain: modules.studionet, account, provider: option.provider });
-    await state.writeClient.connect("studionet");
+    await ensureNetwork(option.provider, modules.studionet);
     const onAccountsChanged = (next) => {
       state.account = next?.[0] || "";
       state.writeClient = null;
