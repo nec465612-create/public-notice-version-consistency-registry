@@ -82,7 +82,12 @@ async function write(functionName, args) {
   const modules = await clients();
   state.readClient ||= modules.createClient({ chain: modules.studionet });
   await ensureNetwork(state.provider, modules.studionet);
-  const hash = await state.writeClient.writeContract({ address, functionName, args, value: BigInt(0) });
+  const writeClient = state.writeClient ||= modules.createClient({
+    chain: modules.studionet,
+    account: state.account,
+    provider: state.provider,
+  });
+  const hash = await writeClient.writeContract({ address, functionName, args, value: BigInt(0) });
   setStatus(`Submitted ${hash.slice(0, 12)}… — waiting for FINALIZED`, "pending");
   const receipt = await state.readClient.waitForTransactionReceipt({
     hash,

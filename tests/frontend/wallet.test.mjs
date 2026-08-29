@@ -28,8 +28,13 @@ assert.equal(app.includes("wallet_getSnaps"), false);
 assert.equal(app.includes('.connect("studionet")'), false);
 assert.match(app, /ensureNetwork/);
 assert.match(index, /id="walletState"/);
+const networkIndex = app.indexOf("await ensureNetwork(state.provider, modules.studionet)");
+const recreateIndex = app.indexOf("const writeClient = state.writeClient ||= modules.createClient", networkIndex);
+const writeIndex = app.indexOf("await writeClient.writeContract", recreateIndex);
+assert.ok(networkIndex >= 0 && networkIndex < recreateIndex && recreateIndex < writeIndex);
+assert.match(app, /const onChainChanged = \(\) => \{[\s\S]*?state\.writeClient = null;/);
 assert.equal(app.includes("readClient ||= modules.createClient"), true);
 assert.equal(app.includes("readResult(readCaseId || undefined)"), true);
 assert.ok(app.indexOf("showResult(validateReadback(raw, expectedState))") < app.indexOf("setStatus(`FINALIZED + SUCCESS"));
 
-console.log("wallet selector and OKX compatibility checks: PASS");
+console.log("wallet selector, OKX compatibility, and chain-change write checks: PASS");
