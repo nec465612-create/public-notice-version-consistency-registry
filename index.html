@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="A consensus-backed registry for comparing public notice versions across independent sources.">
+    <title>Notice Ledger · Version consistency</title>
+    <link rel="stylesheet" href="frontend/styles.css">
+  </head>
+  <body>
+    <header class="topbar shell">
+      <a class="wordmark" href="/">NOTICE <span>LEDGER</span></a>
+      <div class="network-tag"><span class="dot"></span> STUDIONET ONLY</div>
+      <button id="walletButton" class="button button-dark" type="button">Connect wallet</button>
+    </header>
+
+    <main>
+      <section class="hero shell">
+        <div class="eyebrow">Public record / consensus receipt</div>
+        <h1>Which notice is the one<br><em>we can stand behind?</em></h1>
+        <p class="lede">Freeze the provenance of two public sources. Let GenLayer validators fetch, normalize, and compare them without trusting a single publisher or page.</p>
+        <div class="trust-strip"><span>HTTPS sources</span><span>Immutable provenance</span><span>Fail-closed outcomes</span></div>
+      </section>
+
+      <section class="workspace shell">
+        <div class="section-heading"><span class="step">01</span><div><h2>Open a comparison</h2><p>Record what each source claims before any network read.</p></div></div>
+        <div class="panel address-panel">
+          <label for="contractAddress">Deployed contract address <span>Studionet</span></label>
+          <input id="contractAddress" inputmode="text" autocomplete="off" placeholder="0x…" aria-describedby="addressHelp">
+          <p id="addressHelp" class="field-help">Reads are public. Writes require a selected wallet and a fresh signature.</p>
+        </div>
+        <form id="createForm" class="panel form-panel">
+          <div class="form-intro"><span class="source-label">Registry entry</span><span class="rule">All fields required</span></div>
+          <div class="field-grid two">
+            <label>Case ID<input id="caseId" required maxlength="96" placeholder="notice-2026-001"></label>
+            <label>Subject ID<input id="subjectId" required maxlength="256" placeholder="Public notice reference"></label>
+          </div>
+          <div class="source-grid">
+            <div class="source-column"><div class="source-title"><span class="source-mark">A</span><h3>Publisher source</h3></div>
+              <label>HTTPS URL<input id="urlA" required type="url" placeholder="https://publisher.gov/notice"></label>
+              <label>Notice ID<input id="noticeIdA" required maxlength="256" placeholder="PN-42"></label>
+              <label>Declared revision<input id="revisionA" required maxlength="256" placeholder="2026.08"></label>
+              <label>Effective date<input id="effectiveDateA" required type="date"></label>
+            </div>
+            <div class="source-column"><div class="source-title"><span class="source-mark alt">B</span><h3>Independent archive</h3></div>
+              <label>HTTPS URL<input id="urlB" required type="url" placeholder="https://archive.org/notice"></label>
+              <label>Notice ID<input id="noticeIdB" required maxlength="256" placeholder="PN-42"></label>
+              <label>Declared revision<input id="revisionB" required maxlength="256" placeholder="2026.08"></label>
+              <label>Effective date<input id="effectiveDateB" required type="date"></label>
+            </div>
+          </div>
+          <div class="window-row"><div><span class="mini-label">Retrieval window</span><p>Constrains the evidence snapshot used by the case.</p></div><label>Not before<input id="retrievedBefore" required type="date"></label><label>Not after<input id="retrievedAfter" required type="date"></label></div>
+          <button class="button button-accent" type="submit">Create draft <span>→</span></button>
+        </form>
+      </section>
+
+      <section class="operations shell">
+        <div class="section-heading"><span class="step">02</span><div><h2>Move the record</h2><p>Each action is a real contract transaction. Wait for finality before continuing.</p></div></div>
+        <div class="panel operation-panel"><label for="lookupCase">Case ID</label><div class="action-row"><input id="lookupCase" placeholder="notice-2026-001"><button id="freezeButton" class="button button-outline" type="button">Freeze</button><button id="assessButton" class="button button-accent" type="button">Assess sources</button><button id="retryButton" class="button button-outline" type="button">Retry unresolved</button><button id="readButton" class="button button-quiet" type="button">Read result</button></div></div>
+        <div class="status-line" id="status" role="status" aria-live="polite">Disconnected. Connect a wallet only when you are ready to write.</div>
+      </section>
+
+      <section class="result-section shell">
+        <div class="section-heading"><span class="step">03</span><div><h2>Read the receipt</h2><p>Only the finalized contract state counts.</p></div></div>
+        <div id="resultCard" class="panel result-panel" hidden><div class="result-top"><span class="source-label">Authoritative result</span><span id="outcomeBadge" class="outcome-badge">UNRESOLVED</span></div><pre id="resultJson"></pre></div>
+        <div class="empty-result" id="emptyResult">Your case result will appear here after a readback.</div>
+      </section>
+    </main>
+
+    <footer class="shell footer"><span>NOTICE LEDGER / BUILD REVISION 1</span><a href="https://docs.genlayer.com/" rel="noreferrer">GenLayer docs ↗</a></footer>
+
+    <dialog id="walletDialog" class="wallet-dialog"><div class="dialog-heading"><div><span class="eyebrow">Choose a signer</span><h2>Connect wallet</h2></div><button id="closeWallet" class="close-button" type="button" aria-label="Close wallet chooser">×</button></div><p>Choose explicitly. No account request is sent until you select one.</p><div id="walletOptions" class="wallet-options"></div><p id="walletError" class="dialog-error" role="alert"></p></dialog>
+    <script type="module" src="frontend/app.js"></script>
+  </body>
+</html>

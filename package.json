@@ -1,0 +1,11 @@
+{
+  "name": "public-notice-version-consistency-registry",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check:frontend": "node --check frontend/app.js && node --check frontend/wallet.js"
+  },
+  "dependencies": {
+    "genlayer-js": "1.1.8"
+  }
+}

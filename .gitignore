@@ -1,0 +1,10 @@
+AGENTS.md
+CLAUDE.md
+STAGE-1.md
+STAGE-2.md
+__pycache__/
+.pytest_cache/
+artifacts/
+.env
+node_modules/
+evidence/
