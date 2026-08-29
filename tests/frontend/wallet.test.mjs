@@ -50,7 +50,9 @@ assert.equal(app.includes("readResult(readCaseId || undefined)"), true);
 assert.ok(app.indexOf("showResult(validateReadback(raw, expectedState))") < app.indexOf("setStatus(`FINALIZED + SUCCESS"));
 assert.match(app, /statusName \?\? receipt\?\.status/);
 assert.match(app, /status !== 7/);
-assert.match(app, /txExecutionResultName \?\? receipt\?\.txExecutionResult/);
+assert.ok(app.includes("receipt?.txExecutionResultName\n    ?? receipt?.txExecutionResult"));
+assert.match(app, /tx_execution_result_name/);
 assert.match(app, /executionResult !== 1/);
+assert.match(app, /state\.readClient\.getTransaction\(\{ hash \}\)/);
 
 console.log("wallet selector, OKX compatibility, chain-change write, and numeric receipt checks: PASS");
