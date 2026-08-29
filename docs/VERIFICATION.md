@@ -3,8 +3,8 @@
 ## Current release
 
 - Repository: https://github.com/nec465612-create/public-notice-version-consistency-registry
-- Commit: `c376ad5c47fde53454fc6bca625c242f006dde3e`
-- Tree: `c75f68078b06ff10c9eb0d917b22a237502012a2`
+- Commit: `2d2a43c3eea989a5083dbbf04381fef80a1b3b7b`
+- Tree: `1195aad7e1b3d91b0daa4ea05f774c258af9fc14`
 - Live application: https://public-notice-version-consistency-r.vercel.app/
 - Network: GenLayer Studionet, chain `61999`
 - Contract: [`0x0B07e2D40286E4031e916A66d2EB76Dbc0E47D12`](https://explorer-studio.genlayer.com/address/0x0B07e2D40286E4031e916A66d2EB76Dbc0E47D12)
