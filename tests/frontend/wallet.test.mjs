@@ -47,7 +47,25 @@ assert.equal(await recoveredClient.writeContract(), "0xwrite");
 assert.equal(createdClients, 2);
 assert.equal(app.includes("readClient ||= modules.createClient"), true);
 assert.equal(app.includes("readResult(readCaseId || undefined)"), true);
-assert.ok(app.indexOf("showResult(validateReadback(raw, expectedState))") < app.indexOf("setStatus(`FINALIZED + SUCCESS"));
+assert.ok(app.indexOf("showResult(validateReadback(raw, expectedState, previousRetryCount))") < app.indexOf("setStatus(`FINALIZED + SUCCESS"));
+assert.match(app, /const previousRetryCount = verifyRetry[\s\S]*?validateReadback\(await readResult\(readCaseId \|\| undefined\), expectedState\)\.retry_count/);
+assert.match(app, /value\.retry_count !== previousRetryCount \+ 1/);
+assert.match(app, /Authoritative readback did not confirm retry execution/);
+assert.match(app, /write\("retry_unresolved"[\s\S]*?"ASSESSED", true\)/);
+const validateReadbackSource = app.match(/function validateReadback\([\s\S]*?\n\}/)?.[0];
+assert.ok(validateReadbackSource);
+const validateReadback = new Function(
+  "ASSESSED_OUTCOMES",
+  `${validateReadbackSource}; return validateReadback;`,
+)(new Set(["CONSISTENT", "CONFLICTING", "MISSING_VERSION", "UNRESOLVED"]));
+assert.throws(
+  () => validateReadback({ state: "ASSESSED", outcome: "UNRESOLVED", retry_count: 1 }, "ASSESSED", 1),
+  /did not confirm retry execution/,
+);
+assert.equal(
+  validateReadback({ state: "ASSESSED", outcome: "UNRESOLVED", retry_count: 2 }, "ASSESSED", 1).retry_count,
+  2,
+);
 assert.match(app, /statusName \?\? receipt\?\.status/);
 assert.match(app, /status !== 7/);
 assert.ok(app.includes("receipt?.txExecutionResultName\n    ?? receipt?.txExecutionResult"));

@@ -121,10 +121,13 @@ function showResult(raw) {
   badge.dataset.outcome = value.outcome || "UNRESOLVED";
 }
 
-function validateReadback(raw, expectedState) {
+function validateReadback(raw, expectedState, previousRetryCount = null) {
   const value = typeof raw === "string" ? JSON.parse(raw) : raw;
   if (!value || value.state !== expectedState || !ASSESSED_OUTCOMES.has(value.outcome)) {
     throw new Error(`Authoritative readback did not confirm ${expectedState}.`);
+  }
+  if (previousRetryCount !== null && value.retry_count !== previousRetryCount + 1) {
+    throw new Error("Authoritative readback did not confirm retry execution.");
   }
   return value;
 }
@@ -137,13 +140,16 @@ function formArgs() {
   return fieldIds.map((id) => $(id).value.trim());
 }
 
-async function action(fn, readCaseId = null, expectedState) {
+async function action(fn, readCaseId = null, expectedState, verifyRetry = false) {
   if (state.busy) return;
   setBusy(true);
   try {
+    const previousRetryCount = verifyRetry
+      ? validateReadback(await readResult(readCaseId || undefined), expectedState).retry_count
+      : null;
     const { hash } = await fn();
     const raw = await readResult(readCaseId || undefined);
-    showResult(validateReadback(raw, expectedState));
+    showResult(validateReadback(raw, expectedState, previousRetryCount));
     setStatus(`FINALIZED + SUCCESS: ${hash.slice(0, 12)}…`, "success");
   } catch (error) {
     setStatus(error?.message || String(error), "error");
@@ -228,7 +234,7 @@ $("createForm").addEventListener("submit", (event) => {
 });
 $("freezeButton").addEventListener("click", () => action(() => write("freeze_case", [$("lookupCase").value.trim()]), null, "FROZEN"));
 $("assessButton").addEventListener("click", () => action(() => write("assess", [$("lookupCase").value.trim()]), null, "ASSESSED"));
-$("retryButton").addEventListener("click", () => action(() => write("retry_unresolved", [$("lookupCase").value.trim()]), null, "ASSESSED"));
+$("retryButton").addEventListener("click", () => action(() => write("retry_unresolved", [$("lookupCase").value.trim()]), null, "ASSESSED", true));
 $("readButton").addEventListener("click", async () => {
   try { setBusy(true); showResult(await readResult()); setStatus("Authoritative readback complete.", "success"); }
   catch (error) { setStatus(error?.message || String(error), "error"); }
