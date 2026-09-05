@@ -3,8 +3,8 @@
 ## Current release
 
 - Repository: https://github.com/nec465612-create/public-notice-version-consistency-registry
-- Commit: `2d2a43c3eea989a5083dbbf04381fef80a1b3b7b`
-- Tree: `1195aad7e1b3d91b0daa4ea05f774c258af9fc14`
+- Executable release commit: `1057732c448c575d58e8c53d9e83156e38576b71`
+- Executable release tree: `cdd0300e9e5f98cdef6e1acb247039ec3a7e90fe`
 - Live application: https://public-notice-version-consistency-r.vercel.app/
 - Network: GenLayer Studionet, chain `61999`
 - Contract: [`0x0B07e2D40286E4031e916A66d2EB76Dbc0E47D12`](https://explorer-studio.genlayer.com/address/0x0B07e2D40286E4031e916A66d2EB76Dbc0E47D12)
@@ -15,11 +15,11 @@
 | File | SHA-256 |
 | --- | --- |
 | `contracts/notice_registry.py` | `B236E28809826E6559878E327349248C8079F63C34E6AFE773DA9EE93760B651` |
-| `frontend/app.js` | `166F02BE3218B18A4B163CEB0CE5845328C30FAD9A3E0094BF830436810FF5E2` |
+| `frontend/app.js` | `091A954631A32D5D319896E7433F5A87149DE06E30F23FE95ACCCB8DD67EAE27` |
 | `frontend/wallet.js` | `5C0826870C9AC4F612440039CD8681282ED2E3953DE1D3229EF9668B352ED992` |
 | `index.html` | `86BAFB61CA085A066A6394E7DF57689BF20F0A64DDA75418CD57B08B6446DBD4` |
 | `frontend/styles.css` | `274E8954030BF3F3DD729A67883B110F9E080B2A7C02E4B6F666263B47390AB8` |
-| `tests/frontend/wallet.test.mjs` | `B53D802F0FA7AC5B4694A4FED9D69A3E332BBB19928A9A5569F6DE2F28F85985` |
+| `tests/frontend/wallet.test.mjs` | `96C015924D96F14C427F0B5B57EFDC34016CEA8EDD43462D5B0A7C45DDFF159D` |
 | `vercel.json` | `5687163E7CCD7D2F28D4B797B487C85DB6981A00DB7B4B77C5F56A93C7A134CC` |
 
 The deployed contract source matches the recorded contract hash. The browser release uses the same `index.html`, `frontend/app.js`, `frontend/wallet.js`, and stylesheet hashes listed above.
@@ -37,6 +37,10 @@ git diff --check                                         -> PASS
 ```
 
 The linter reports only non-blocking informational diagnostic `I200` about a newer runner. The browser client is pinned to GenLayerJS `1.1.8`.
+
+## Retry confirmation
+
+Before `retry_unresolved`, the frontend reads and retains the authoritative `retry_count`. After the submitted transaction reaches finality and passes any available execution-result check, it reads the record again. The UI reports success only when the state remains `ASSESSED`, the outcome is valid, and `retry_count` equals the retained value plus one. An unchanged previously assessed record therefore fails with an explicit retry-verification error instead of being shown as a successful retry. The frontend regression executes both the unchanged-count rejection and incremented-count success cases.
 
 ## Live proof matrix
 

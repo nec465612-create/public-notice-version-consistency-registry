@@ -26,7 +26,7 @@ npm run check:frontend
 node tests/frontend/wallet.test.mjs
 ```
 
-The verified environment is Python 3.13.6 with `genlayer-test==0.29.2`, `genvm-linter==0.11.0`, `genlayer-py==0.16.3`, Node 22, and GenLayerJS 1.1.8 for the browser client. The frontend waits for `FINALIZED`, requires successful execution, then performs an authoritative readback. It does not treat a submitted hash or `ACCEPTED` receipt as success.
+The verified environment is Python 3.13.6 with `genlayer-test==0.29.2`, `genvm-linter==0.11.0`, `genlayer-py==0.16.3`, Node 22, and GenLayerJS 1.1.8 for the browser client. The frontend waits for `FINALIZED`, requires successful execution, then performs an authoritative readback. A retry is confirmed only when the post-transaction `retry_count` is exactly one greater than its pre-transaction value. It does not treat a submitted hash, `ACCEPTED` receipt, or unchanged prior readback as success.
 
 The final release evidence records the exact source revision, deployment parity, local checks, and live proof matrix in [`docs/VERIFICATION.md`](docs/VERIFICATION.md).
 
