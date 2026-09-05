@@ -6,7 +6,6 @@
 - Executable release commit: `1057732c448c575d58e8c53d9e83156e38576b71`
 - Executable release tree: `cdd0300e9e5f98cdef6e1acb247039ec3a7e90fe`
 - Live application: https://public-notice-version-consistency-r.vercel.app/
-- Corrected production deployment: https://public-notice-version-consistency-registry-9u6fd5ylv-nec10.vercel.app/
 - Network: GenLayer Studionet, chain `61999`
 - Contract: [`0x0B07e2D40286E4031e916A66d2EB76Dbc0E47D12`](https://explorer-studio.genlayer.com/address/0x0B07e2D40286E4031e916A66d2EB76Dbc0E47D12)
 - Deployment transaction: [`0xb8130356f974d6cc2a9f3b09df0c2e6277eb63622ea3f551e1ba38ccb70b1ceb`](https://explorer-studio.genlayer.com/tx/0xb8130356f974d6cc2a9f3b09df0c2e6277eb63622ea3f551e1ba38ccb70b1ceb)
